@@ -1,15 +1,12 @@
 #!/usr/bin/python
-#
-# The Python Imaging Library
-# $Id$
-#
 
 from Tkinter import *
 from PIL import Image, ImageTk
 import sys
 
 Image.DEBUG = 0
-
+# loop image list forever
+eternalloop = True
 
 # --------------------------------------------------------------------
 
@@ -31,10 +28,11 @@ class AppletDisplay:
 class UI(Label):
 
     def __init__(self, master, ims):
-        self.ims = ims
-        self.nr = 0
+        self.ims = ims # image queue
+        self.nr = 0 # image number
         self.backwards = False
         self.pause = False
+        self.speed = 1.0
         # no images to display
         if len(ims)==0:
           return
@@ -57,7 +55,7 @@ class UI(Label):
             duration = im.info["duration"]
         except KeyError:
             duration = 100
-        self.after(duration, self.next)
+        self.after(int(self.speed*duration), self.next)
 
     # go to next frame or pic
     def next(self):
@@ -72,8 +70,9 @@ class UI(Label):
 				 		print im.tell()
 				 		if self.backwards:
 				 			if frameNr == 0:
-				 				print "I cannot go to previous pic yet"
-				 				self.end()
+                # does not work beyond pic so we just go forwards again
+				 				#self.prevPic()
+								self.backwards = not self.backwards
 				 			# mimick backwards seeking with a loop
 				 			if frameNr > 0:
 				 				im.seek(0)
@@ -83,24 +82,48 @@ class UI(Label):
 				 			im.seek(frameNr + 1)
 				 		self.image.paste(im)
         except EOFError:
-             #print "turn backwards"
-             #self.backwards = not self.backwards
-             self.nextPic('')
+             self.nextPic()
 
         try:
             duration = im.info["duration"]
         except KeyError:
             duration = 100
-        self.after(duration, self.next)
+        self.after(int(self.speed*duration), self.next)
 
         self.update_idletasks()
 
-    def nextPic(self,filename):
+    def nextPic(self):
  				self.nr = self.nr + 1
         # if no more pics in queue, quit
 				if self.nr >= len(self.ims):
-					self.end()
+					if eternalloop:
+						self.nr = 0
+					else:
+						self.end()
 				im = self.ims[self.nr]
+				im.seek(0)
+				self.im = im
+				self.image.paste(im)
+
+    # does not work properly
+    def prevPic(self):
+				print 'lower pic number to'
+ 				self.nr = self.nr - 1
+        # if no more pics in queue, quit
+				if self.nr < 0:
+					if eternalloop:
+						self.nr = len(self.ims) - 1
+					else:
+						self.end()
+				print "nr",self.nr
+				im = self.ims[self.nr]
+        # TODO seek last frame is faulty
+				im.seek(0)
+				try: 
+					while True:
+				 		im.seek(im.tell() + 1)
+				except EOFError:
+					print "reached the last frame which is ",im.tell()
 				self.im = im
 				self.image.paste(im)
 
@@ -116,11 +139,20 @@ class UI(Label):
 # key and mouse events
 
 def key(event):
-#    frame.focus_set()
+    frame.focus_set()
+    # rating
     if event.char=='y':
       print "Yay"
     elif event.char=='n':
       print "Nay"
+    # speeeeed
+    if event.char=='f':
+      frame.speed = frame.speed/2
+      print "Faster"
+    elif event.char=='s':
+      frame.speed = 2 * frame.speed
+      print "Slower"
+    # backward and pause play
     elif event.char=='b':
       frame.backwards = not frame.backwards
       print "backwards"
@@ -135,10 +167,6 @@ def key(event):
       print "Press y(ay) or n(ay)!"
       print "pressed", repr(event.char)
 
-#def callback(event):
-#    frame.focus_set()
-    #print "clicked at", event.x, event.y
-
 # --------------------------------------------------------------------
 # script interface
 
@@ -150,7 +178,7 @@ if __name__ == "__main__":
 
     filename = sys.argv[1]
     root = Tk()
-    # remove borders - removes also resizing
+    # remove borders - removes also resizing and keybindings :(
     #root.overrideredirect(1)
     root.title(filename)
 
@@ -164,7 +192,6 @@ if __name__ == "__main__":
     im = Image.open(filename)
     frame = UI(root, ims)
     frame.bind("<Key>", key)
-#    frame.bind("<Button-1>", callback)
     frame.pack()
     frame.focus_set()
     root.mainloop()
