@@ -32,11 +32,13 @@ class UI(Label):
 
     def __init__(self, master, ims):
         self.ims = ims
+        self.nr = 0
+        self.backwards = False
+        self.pause = False
         # no images to display
         if len(ims)==0:
           return
-        self.im = ims[0]
-        self.ims.pop(0)
+        self.im = ims[self.nr]
 
         if im.mode == "1":
             self.image = ImageTk.BitmapImage(im, foreground="white")
@@ -60,17 +62,30 @@ class UI(Label):
     # go to next frame or pic
     def next(self):
 
-        if type(self.im) == type([]):
-                return # end of list
-
-        else:
-            try:
-                # next frame
-        				im = self.im
-        				im.seek(im.tell() + 1)
-        				self.image.paste(im)
-            except EOFError:
-                self.nextPic('turn.gif')
+      if self.pause:
+      	return
+      else:
+        try:
+				 		# next frame
+				 		im = self.im
+				 		frameNr = im.tell()
+				 		print im.tell()
+				 		if self.backwards:
+				 			if frameNr == 0:
+				 				print "I cannot go to previous pic yet"
+				 				self.end()
+				 			# mimick backwards seeking with a loop
+				 			if frameNr > 0:
+				 				im.seek(0)
+				 				for i in xrange(0,frameNr-1):
+				 				  im.seek(im.tell() + 1)
+				 		else:
+				 			im.seek(frameNr + 1)
+				 		self.image.paste(im)
+        except EOFError:
+             #print "turn backwards"
+             #self.backwards = not self.backwards
+             self.nextPic('')
 
         try:
             duration = im.info["duration"]
@@ -80,15 +95,14 @@ class UI(Label):
 
         self.update_idletasks()
 
-    def nextFrame(self):
-        im = self.im
-        im.seek(im.tell() + 1)
-        self.image.paste(im)
-
     def nextPic(self,filename):
-        im = Image.open(filename)
-        self.im = im
-        self.image.paste(im)
+ 				self.nr = self.nr + 1
+        # if no more pics in queue, quit
+				if self.nr >= len(self.ims):
+					self.end()
+				im = self.ims[self.nr]
+				self.im = im
+				self.image.paste(im)
 
     def end(self):
         sys.exit(0)
@@ -102,17 +116,27 @@ class UI(Label):
 # key and mouse events
 
 def key(event):
-    frame.focus_set()
+#    frame.focus_set()
     if event.char=='y':
       print "Yay"
     elif event.char=='n':
       print "Nay"
+    elif event.char=='b':
+      frame.backwards = not frame.backwards
+      print "backwards"
+    elif event.char==' ':
+      frame.pause = not frame.pause
+      if frame.pause:
+        print "paused"
+      else:
+        print "unpaused"
+        frame.next()
     else:
       print "Press y(ay) or n(ay)!"
       print "pressed", repr(event.char)
 
-def callback(event):
-    frame.focus_set()
+#def callback(event):
+#    frame.focus_set()
     #print "clicked at", event.x, event.y
 
 # --------------------------------------------------------------------
@@ -140,6 +164,7 @@ if __name__ == "__main__":
     im = Image.open(filename)
     frame = UI(root, ims)
     frame.bind("<Key>", key)
-    frame.bind("<Button-1>", callback)
+#    frame.bind("<Button-1>", callback)
     frame.pack()
+    frame.focus_set()
     root.mainloop()
