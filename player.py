@@ -30,14 +30,13 @@ class AppletDisplay:
 
 class UI(Label):
 
-    def __init__(self, master, im):
-        if type(im) == type([]):
-            # list of images
-            self.im = im[1:]
-            im = self.im[0]
-        else:
-            # sequence
-            self.im = im
+    def __init__(self, master, ims):
+        self.ims = ims
+        # no images to display
+        if len(ims)==0:
+          return
+        self.im = ims[0]
+        self.ims.pop(0)
 
         if im.mode == "1":
             self.image = ImageTk.BitmapImage(im, foreground="white")
@@ -99,6 +98,22 @@ class UI(Label):
         im.seek(0)
         self.image.paste(im)
 
+# ------------------------
+# key and mouse events
+
+def key(event):
+    frame.focus_set()
+    if event.char=='y':
+      print "Yay"
+    elif event.char=='n':
+      print "Nay"
+    else:
+      print "Press y(ay) or n(ay)!"
+      print "pressed", repr(event.char)
+
+def callback(event):
+    frame.focus_set()
+    #print "clicked at", event.x, event.y
 
 # --------------------------------------------------------------------
 # script interface
@@ -115,12 +130,16 @@ if __name__ == "__main__":
     #root.overrideredirect(1)
     root.title(filename)
 
-    # for 2 gifs it is not working!
+    # enqueue further images
     if len(sys.argv) > 2:
         print "can just play one for now"
-    else:
-        # sequence
-        im = Image.open(filename)
-
-    UI(root, im).pack()
+    ims = []
+    for file in sys.argv[1:]:
+      ims.append(Image.open(file))
+    # open the first image
+    im = Image.open(filename)
+    frame = UI(root, ims)
+    frame.bind("<Key>", key)
+    frame.bind("<Button-1>", callback)
+    frame.pack()
     root.mainloop()
