@@ -54,11 +54,11 @@ class UI(Label):
 
         try:
             duration = im.info["duration"]
-            print duration
         except KeyError:
             duration = 100
         self.after(duration, self.next)
 
+    # go to next frame
     def next(self):
 
         if type(self.im) == type([]):
@@ -71,13 +71,12 @@ class UI(Label):
                 im.seek(im.tell() + 1)
                 self.image.paste(im)
             except EOFError:
-                print "I wish we could loop"
-                self.end()
-                #return # end of file
+                #self.end()
+                self.loop()
+                # end of file
 
         try:
             duration = im.info["duration"]
-            print duration
         except KeyError:
             duration = 100
         self.after(duration, self.next)
@@ -87,6 +86,10 @@ class UI(Label):
     def end(self):
         sys.exit(0)
 
+    def loop(self):
+        im = self.im
+        im.seek(0)
+        self.image.paste(im)
 
 # --------------------------------------------------------------------
 # script interface
