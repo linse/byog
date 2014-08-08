@@ -27,8 +27,9 @@ class AppletDisplay:
 
 class UI(Label):
 
-    def __init__(self, master, ims):
+    def __init__(self, master, ims, probs):
         self.ims = ims # image queue
+        self.probs = probs # choice probabilities
         self.nr = 0 # image number
         self.backwards = False
         self.pause = False
@@ -92,6 +93,17 @@ class UI(Label):
 
         self.update_idletasks()
 
+    def pickNextNumberIID(self):
+        # shift all votes to being positive
+        # normalize so we have probabilities
+        # draw
+
+    # TODO four loop modes: run image and finish, run image forever, run image n times, run image n seconds
+    # self.repeatOne
+    # self.repeatedTimes
+    # self.repeatTimes
+    # self.repeatTimespan
+
     def nextPic(self):
  				self.nr = self.nr + 1
         # if no more pics in queue, quit
@@ -142,8 +154,12 @@ def key(event):
     frame.focus_set()
     # rating
     if event.char=='y':
+      frame.probs[frame.nr] = frame.probs[frame.nr]+1
+      print frame.probs[frame.nr]
+      print str(frame.probs)
       print "Yay"
     elif event.char=='n':
+      frame.probs[frame.nr] = frame.probs[frame.nr]-1
       print "Nay"
     # speeeeed
     if event.char=='f':
@@ -183,14 +199,14 @@ if __name__ == "__main__":
     root.title(filename)
 
     # enqueue further images
-    if len(sys.argv) > 2:
-        print "can just play one for now"
     ims = []
+    probs = []
     for file in sys.argv[1:]:
       ims.append(Image.open(file))
+      probs.append(0)
     # open the first image
     im = Image.open(filename)
-    frame = UI(root, ims)
+    frame = UI(root, ims, probs)
     frame.bind("<Key>", key)
     frame.pack()
     frame.focus_set()
