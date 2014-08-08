@@ -58,22 +58,20 @@ class UI(Label):
             duration = 100
         self.after(duration, self.next)
 
-    # go to next frame
+    # go to next frame or pic
     def next(self):
 
         if type(self.im) == type([]):
                 return # end of list
 
         else:
-
             try:
-                im = self.im
-                im.seek(im.tell() + 1)
-                self.image.paste(im)
+                # next frame
+        				im = self.im
+        				im.seek(im.tell() + 1)
+        				self.image.paste(im)
             except EOFError:
-                #self.end()
-                self.loop()
-                # end of file
+                self.nextPic('turn.gif')
 
         try:
             duration = im.info["duration"]
@@ -83,6 +81,16 @@ class UI(Label):
 
         self.update_idletasks()
 
+    def nextFrame(self):
+        im = self.im
+        im.seek(im.tell() + 1)
+        self.image.paste(im)
+
+    def nextPic(self,filename):
+        im = Image.open(filename)
+        self.im = im
+        self.image.paste(im)
+
     def end(self):
         sys.exit(0)
 
@@ -90,6 +98,7 @@ class UI(Label):
         im = self.im
         im.seek(0)
         self.image.paste(im)
+
 
 # --------------------------------------------------------------------
 # script interface
@@ -102,6 +111,8 @@ if __name__ == "__main__":
 
     filename = sys.argv[1]
     root = Tk()
+    # remove borders - removes also resizing
+    #root.overrideredirect(1)
     root.title(filename)
 
     # for 2 gifs it is not working!
