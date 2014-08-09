@@ -40,12 +40,12 @@ class UI(Label):
         # no images to display
         if len(ims)==0:
           return
-        self.im = ims[self.nr]
+        self.im = Image.open(ims[self.nr])
 
-        if im.mode == "1":
+        if self.im.mode == "1":
             self.image = ImageTk.BitmapImage(im, foreground="white")
         else:
-            self.image = ImageTk.PhotoImage(im)
+            self.image = ImageTk.PhotoImage(self.im)
 
         # APPLET SUPPORT (very crude, and not 100% safe)
         global animation_display
@@ -56,7 +56,7 @@ class UI(Label):
         self.update()
 
         try:
-            duration = im.info["duration"]
+            duration = self.im.info["duration"]
         except KeyError:
             duration = 100
         self.after(int(self.speed*duration), self.next)
@@ -128,16 +128,19 @@ class UI(Label):
 
     def choosePic(self,number):
  				self.nr = number
-        # if no more pics in queue, quit
+        # if no more pics in queue, quit or loop
 				if self.nr >= len(self.ims):
 					if eternalloop:
 						self.nr = 0
 					else:
 						self.end()
-				im = self.ims[self.nr]
-				im.seek(0)
-				self.im = im
-				self.image.paste(im)
+				self.im = Image.open(self.ims[self.nr])
+				self.im.seek(0)
+				if self.im.mode == "1":
+				    self.image = ImageTk.BitmapImage(im, foreground="white")
+				else:
+				    self.image = ImageTk.PhotoImage(self.im)
+				self.configure(image = self.image)
 
     # does not work properly
     def prevPic(self):
@@ -226,12 +229,12 @@ if __name__ == "__main__":
     ims = []
     probs = []
     for file in sys.argv[1:]:
-      ims.append(Image.open(file))
+      #ims.append(Image.open(file))
+      ims.append(file)
       probs.append(0)
     # open the first image
-    im = Image.open(filename)
     frame = UI(root, ims, probs)
     frame.bind("<Key>", key)
-    frame.pack()
+    frame.pack(side="bottom",fill="both",expand="yes")
     frame.focus_set()
     root.mainloop()
