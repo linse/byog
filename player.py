@@ -3,6 +3,7 @@
 from Tkinter import *
 from PIL import Image, ImageTk
 import sys
+import random
 
 Image.DEBUG = 0
 # loop image list forever
@@ -93,16 +94,41 @@ class UI(Label):
 
         self.update_idletasks()
 
-    def pickNextNumberIID(self):
-        # shift all votes to being positive
-        # normalize so we have probabilities
-        # draw
+    def weighted_choice(self,choices):
+		   total = sum(w for c, w in choices)
+		   r = random.uniform(0, total)
+		   upto = 0
+		   for c, w in choices:
+		      if upto + w > r:
+		         return c
+		      upto += w
+		   assert False, "Shouldn't get here"
 
-    # TODO four loop modes: run image and finish, run image forever, run image n times, run image n seconds
-    # self.repeatOne
-    # self.repeatedTimes
-    # self.repeatTimes
-    # self.repeatTimespan
+
+    def pickNextNumberIID(self):
+        maxval = max(self.probs)
+        minval = min(self.probs)
+        print str(self.probs)
+        print 'max',str(maxval)
+        print 'min',str(minval)
+        # shift all votes to being positive
+        positive = self.probs
+        if minval < 0:
+          positive = [ x-minval for x in self.probs]
+          print positive
+        # normalize so we have probabilities
+        completesum = sum(positive)
+        print completesum
+        percentages = [ x / completesum for x in positive ]
+        # draw
+        choiceNweight = zip(self.ims,percentages)
+        print "Chosen", self.weighted_choice(choiceNweight)
+
+        # TODO four loop modes: run image and finish, run image forever, run image n times, run image n seconds
+        # self.repeatOne
+        # self.repeatedTimes
+        # self.repeatTimes
+        # self.repeatTimespan
 
     def nextPic(self):
  				self.nr = self.nr + 1
@@ -116,6 +142,7 @@ class UI(Label):
 				im.seek(0)
 				self.im = im
 				self.image.paste(im)
+
 
     # does not work properly
     def prevPic(self):
@@ -172,6 +199,8 @@ def key(event):
     elif event.char=='b':
       frame.backwards = not frame.backwards
       print "backwards"
+    elif event.char=='p':
+      frame.pickNextNumberIID()
     elif event.char==' ':
       frame.pause = not frame.pause
       if frame.pause:
