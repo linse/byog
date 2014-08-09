@@ -1,9 +1,11 @@
 #!/usr/bin/python
 
+from __future__ import division
 from Tkinter import *
 from PIL import Image, ImageTk
 import sys
 import random
+import numpy
 
 Image.DEBUG = 0
 # loop image list forever
@@ -69,7 +71,7 @@ class UI(Label):
 				 		# next frame
 				 		im = self.im
 				 		frameNr = im.tell()
-				 		print im.tell()
+				 		#print im.tell()
 				 		if self.backwards:
 				 			if frameNr == 0:
                 # does not work beyond pic so we just go forwards again
@@ -98,31 +100,33 @@ class UI(Label):
 		   total = sum(w for c, w in choices)
 		   r = random.uniform(0, total)
 		   upto = 0
+		   counter = 0
 		   for c, w in choices:
 		      if upto + w > r:
-		         return c
+		         return counter,c
 		      upto += w
+		      counter += 1
 		   assert False, "Shouldn't get here"
 
 
-    def pickNextNumberIID(self):
-        maxval = max(self.probs)
+    def weightedNextPic(self):
         minval = min(self.probs)
-        print str(self.probs)
-        print 'max',str(maxval)
-        print 'min',str(minval)
-        # shift all votes to being positive
         positive = self.probs
+        # shift all votes to being positive
+        # pseudocount of 1 so no probability will be 0
         if minval < 0:
-          positive = [ x-minval for x in self.probs]
-          print positive
+          positive = [ x-minval+1 for x in positive]
+        else:
+          positive = [ x+1 for x in positive]
         # normalize so we have probabilities
         completesum = sum(positive)
-        print completesum
-        percentages = [ x / completesum for x in positive ]
-        # draw
-        choiceNweight = zip(self.ims,percentages)
-        print "Chosen", self.weighted_choice(choiceNweight)
+        percentages = positive
+        if completesum > 0:
+          percentages = [ x / completesum for x in positive ]
+        # draw from the urn of pics :D
+        indices = [ c for c,i in enumerate(percentages) ]
+        nextPicNr = numpy.random.choice(indices, p=percentages)
+        self.choosePic(nextPicNr)
 
         # TODO four loop modes: run image and finish, run image forever, run image n times, run image n seconds
         # self.repeatOne
@@ -130,8 +134,8 @@ class UI(Label):
         # self.repeatTimes
         # self.repeatTimespan
 
-    def nextPic(self):
- 				self.nr = self.nr + 1
+    def choosePic(self,number):
+ 				self.nr = number
         # if no more pics in queue, quit
 				if self.nr >= len(self.ims):
 					if eternalloop:
@@ -143,6 +147,8 @@ class UI(Label):
 				self.im = im
 				self.image.paste(im)
 
+    def nextPic(self):
+        self.choosePic(self.nr + 1)
 
     # does not work properly
     def prevPic(self):
@@ -191,16 +197,16 @@ def key(event):
     # speeeeed
     if event.char=='f':
       frame.speed = frame.speed/2
-      print "Faster"
+      #print "Faster"
     elif event.char=='s':
       frame.speed = 2 * frame.speed
-      print "Slower"
+      #print "Slower"
     # backward and pause play
     elif event.char=='b':
       frame.backwards = not frame.backwards
-      print "backwards"
+      #print "backwards"
     elif event.char=='p':
-      frame.pickNextNumberIID()
+      frame.weightedNextPic()
     elif event.char==' ':
       frame.pause = not frame.pause
       if frame.pause:
