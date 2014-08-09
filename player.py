@@ -44,7 +44,7 @@ class UI(Label):
         self.im = Image.open(ims[self.nr])
         # image is the actual image object
         if self.im.mode == "1":
-            self.image = ImageTk.BitmapImage(im, foreground="white")
+            self.image = ImageTk.BitmapImage(self.im, foreground="white")
         else:
             self.image = ImageTk.PhotoImage(self.im)
 
@@ -87,7 +87,14 @@ class UI(Label):
 				 			im.seek(frameNr + 1)
 				 		self.image.paste(im)
         except EOFError:
-             self.weightedNextPic()
+             # 50:50 chance for 0 or 1
+             draw = random.randint(0,2)
+             if draw == 1:
+               # take same pic as we have
+               self.choosePic(self.nr)
+             else:
+               # change it
+               self.weightedNextPic()
 
         try:
             duration = im.info["duration"]
