@@ -3,8 +3,8 @@
 from __future__ import division
 from Tkinter import *
 from PIL import Image, ImageTk
+from numpy import *
 import sys
-import random
 import numpy
 
 Image.DEBUG = 0
@@ -64,6 +64,7 @@ class UI(Label):
     # go to next frame or pic
     def next(self):
 
+      self.end
       if self.pause:
       	return
       else:
@@ -74,8 +75,7 @@ class UI(Label):
 				 		#print im.tell()
 				 		if self.backwards:
 				 			if frameNr == 0:
-                # does not work beyond pic so we just go forwards again
-				 				#self.prevPic()
+                # prevPic does now work yet, so we just go forwards again
 								self.backwards = not self.backwards
 				 			# mimick backwards seeking with a loop
 				 			if frameNr > 0:
@@ -86,7 +86,7 @@ class UI(Label):
 				 			im.seek(frameNr + 1)
 				 		self.image.paste(im)
         except EOFError:
-             self.nextPic()
+             self.weightedNextPic()
 
         try:
             duration = im.info["duration"]
@@ -96,18 +96,16 @@ class UI(Label):
 
         self.update_idletasks()
 
-    def weighted_choice(self,choices):
-		   total = sum(w for c, w in choices)
-		   r = random.uniform(0, total)
-		   upto = 0
-		   counter = 0
-		   for c, w in choices:
-		      if upto + w > r:
-		         return counter,c
-		      upto += w
-		      counter += 1
-		   assert False, "Shouldn't get here"
+        # TODO four loop modes: run image and finish, run image forever, run image n times, run image n seconds
+        # self.repeatOne
+        # self.repeatedTimes
+        # self.repeatTimes
+        # self.repeatTimespan
 
+    #def checkPic(self):
+
+    def nextPic(self):
+        self.choosePic(self.nr + 1)
 
     def weightedNextPic(self):
         minval = min(self.probs)
@@ -125,14 +123,8 @@ class UI(Label):
           percentages = [ x / completesum for x in positive ]
         # draw from the urn of pics :D
         indices = [ c for c,i in enumerate(percentages) ]
-        nextPicNr = numpy.random.choice(indices, p=percentages)
+        nextPicNr = random.choice(indices, p=percentages)
         self.choosePic(nextPicNr)
-
-        # TODO four loop modes: run image and finish, run image forever, run image n times, run image n seconds
-        # self.repeatOne
-        # self.repeatedTimes
-        # self.repeatTimes
-        # self.repeatTimespan
 
     def choosePic(self,number):
  				self.nr = number
@@ -146,9 +138,6 @@ class UI(Label):
 				im.seek(0)
 				self.im = im
 				self.image.paste(im)
-
-    def nextPic(self):
-        self.choosePic(self.nr + 1)
 
     # does not work properly
     def prevPic(self):
