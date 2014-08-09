@@ -40,8 +40,9 @@ class UI(Label):
         # no images to display
         if len(ims)==0:
           return
+        # im is just the image file opened
         self.im = Image.open(ims[self.nr])
-
+        # image is the actual image object
         if self.im.mode == "1":
             self.image = ImageTk.BitmapImage(im, foreground="white")
         else:
@@ -51,7 +52,7 @@ class UI(Label):
         global animation_display
         animation_display = AppletDisplay(self)
 
-        Label.__init__(self, master, image=self.image, bg="black", bd=0)
+        Label.__init__(self, master, image=self.image, bg="black", bd=0, width=800, height=600)
 
         self.update()
 
@@ -223,7 +224,7 @@ if __name__ == "__main__":
     root = Tk()
     # remove borders - removes also resizing and keybindings :(
     #root.overrideredirect(1)
-    root.title(filename)
+    root.title('BYOG - Bring your own *.gif!')
 
     # enqueue further images
     ims = []
